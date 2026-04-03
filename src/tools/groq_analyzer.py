@@ -5,17 +5,13 @@ import os
 from groq import Groq
 from dotenv import load_dotenv
 
-# Load .env file so we can read GROQ_API_KEY
-# WHY: We never hardcode API keys in code
-# dotenv reads the .env file and makes keys available via os.environ
+
 load_dotenv()
 
 class GroqAnalyzer:
     
     def __init__(self):
-        # Initialize Groq client with API key from .env file
-        # If key is missing, this will raise an error immediately
-        # WHY FAIL FAST: Better to crash at startup than fail silently later
+       
         api_key = os.getenv('GROQ_API_KEY')
         
         if not api_key:
@@ -26,11 +22,7 @@ class GroqAnalyzer:
         
         self.client = Groq(api_key=api_key)
         
-        # Model we are using
-        # WHY llama-3.3-70b-versatile:
-        # 70 billion parameters = very intelligent
-        # versatile = good at reasoning, analysis, structured output
-        # Free on Groq with generous rate limits
+       
         self.model = "llama-3.3-70b-versatile"
         
         print(f"GroqAnalyzer initialized with model: {self.model}")
@@ -48,34 +40,17 @@ class GroqAnalyzer:
         Returns: Dictionary with severity, root_cause, recommendation
         """
         
-        # Format logs into readable text for the AI
-        # Take last 50 lines maximum
-        # WHY 50: More lines = more tokens = slower and costlier
-        # 50 recent lines almost always contain the root cause
+        
         if len(logs) > 50:
             logs_text = '\n'.join(logs[-50:])
             print("Using last 50 log lines for analysis")
         else:
             logs_text = '\n'.join(logs) if logs else "No logs available"
         
-        # Format metrics as readable JSON string
+       
         metrics_text = json.dumps(metrics, indent=2, default=str)
         
-        # THE PROMPT — Most Critical Part of This Entire Project
-        # 
-        # WHY THIS STRUCTURE:
-        # 1. Role definition — tells AI WHO it is (expert SRE)
-        #    Without this, AI gives generic answers
-        #    With this, AI thinks and responds like an expert
-        #
-        # 2. Structured input — separates alarm, logs, metrics clearly
-        #    AI can focus on each section without confusion
-        #
-        # 3. Exact output format — tells AI EXACTLY what JSON to return
-        #    Without this, AI adds explanation text that breaks JSON parsing
-        #
-        # 4. Examples in format — shows AI the expected values
-        #    AI follows examples very accurately
+       
         
         prompt = f"""You are a senior AWS Site Reliability Engineer (SRE) 
 with 10 years of experience diagnosing production incidents.
@@ -123,46 +98,34 @@ Severity guide:
         print(f"Log lines analyzed: {len(logs)}")
         
         try:
-            # Make the API call to Groq
-            # This is where the AI actually thinks and responds
+           
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {
-                        # 'user' role means this is our input to the AI
-                        # Alternative is 'system' role for instructions
-                        # WHY user role here: we combine instructions + data
-                        # in one message for simplicity
+                        
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                # Maximum tokens in the response
-                # 1000 tokens is enough for our JSON response
-                # WHY NOT MORE: We only need structured JSON, not essays
+                
                 max_tokens=1000,
                 
-                # Temperature controls creativity vs consistency
-                # 0.1 = very consistent, focused, less creative
-                # WHY LOW TEMPERATURE:
-                # We need consistent JSON output every time
-                # High temperature (0.8+) would give different formats each run
-                # which breaks our JSON parser
+                
                 temperature=0.1,
             )
             
-            # Extract the text response from API result
+            
             ai_response = response.choices[0].message.content.strip()
             print(f"AI response received: {len(ai_response)} characters")
             
-            # Parse JSON from AI response
+            
             analysis = self._parse_ai_response(ai_response)
             return analysis
             
         except Exception as e:
             print(f"Error calling Groq API: {str(e)}")
-            # Return a fallback response so the system keeps running
-            # WHY FALLBACK: Notification must go out even if AI fails
+           
             return self._fallback_response(alarm_name, str(e))
     
     def _parse_ai_response(self, response_text: str) -> dict:
@@ -174,15 +137,14 @@ Severity guide:
         the main method clean and this method easy to test.
         """
         try:
-            # Direct JSON parse — works when AI follows instructions
+            
             return json.loads(response_text)
             
         except json.JSONDecodeError:
-            # AI sometimes adds markdown code blocks like ```json
-            # even when told not to. We handle this gracefully.
+            
             print("Direct JSON parse failed, trying to extract JSON...")
             
-            # Find JSON content between curly braces
+            
             start = response_text.find('{')
             end = response_text.rfind('}') + 1
             
@@ -193,7 +155,7 @@ Severity guide:
                 except json.JSONDecodeError:
                     print("JSON extraction also failed")
             
-            # If all parsing fails, return structured error response
+            
             return self._fallback_response("unknown", "JSON parsing failed")
     
     def _fallback_response(self, alarm_name: str, error: str) -> dict:
@@ -218,11 +180,10 @@ Severity guide:
         }
 
 
-# TEST BLOCK
-# Run this file directly to test: python src/tools/groq_analyzer.py
+
 if __name__ == "__main__":
     
-    # Sample test data simulating a real incident
+    
     test_alarm = "production-high-cpu-alarm"
     
     test_logs = [
