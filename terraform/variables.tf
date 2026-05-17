@@ -28,13 +28,10 @@ variable "project_name" {
   # All our resources will be named: ai-incident-response-*
 }
 
-variable "groq_api_key" {
-  description = "Groq API key for LLM access"
+variable "openrouter_api_key" {
+  description = "OpenRouter API key for LLM access"
   type        = string
   sensitive   = true
-  # sensitive = true means Terraform will never print
-  # this value in logs or terminal output
-  # CRITICAL for security
 }
 
 variable "slack_webhook_url" {

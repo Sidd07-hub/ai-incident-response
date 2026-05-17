@@ -196,13 +196,13 @@ resource "aws_lambda_function" "incident_handler" {
   # WHY NOT HARDCODE: Security. These are secrets.
   # Lambda encrypts environment variables at rest with KMS
   environment {
-    variables = {
-      GROQ_API_KEY      = var.groq_api_key
-      SLACK_WEBHOOK_URL = var.slack_webhook_url
-      S3_BUCKET_NAME    = aws_s3_bucket.incident_reports.bucket
-      ENVIRONMENT       = var.environment
-    }
+  variables = {
+    OPENROUTER_API_KEY = var.openrouter_api_key
+    SLACK_WEBHOOK_URL  = var.slack_webhook_url
+    S3_BUCKET_NAME     = aws_s3_bucket.incident_reports.bucket
+    ENVIRONMENT        = var.environment
   }
+}
 
   tags = {
     Project     = var.project_name
