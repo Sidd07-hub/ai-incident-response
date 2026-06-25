@@ -41,3 +41,18 @@ output "deployment_summary" {
     Region          : ${var.aws_region}
   EOT
 }
+
+output "ec2_public_ip" {
+  description = "Public IP of EC2 instance"
+  value       = aws_instance.flask_app.public_ip
+}
+
+output "ec2_instance_id" {
+  description = "EC2 Instance ID"
+  value       = aws_instance.flask_app.id
+}
+
+output "flask_app_url" {
+  description = "Flask app URL"
+  value       = "http://${aws_instance.flask_app.public_ip}:5000"
+}

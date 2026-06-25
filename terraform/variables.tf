@@ -86,3 +86,9 @@ variable "environment" {
   # Used in resource names and tags
   # Helps identify which environment has an incident
 }
+
+variable "openrouter_api_key" {
+  description = "OpenRouter API key for LLM access"
+  type        = string
+  sensitive   = true
+}
